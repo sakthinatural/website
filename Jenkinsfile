@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent any
     
     stages {
         stage("Build Website"){
@@ -17,7 +17,11 @@ pipeline {
                 label "testing"
             }
             steps {
-                sh "sudo docker run -it -d -P testing" 
+                withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerpwd')]) {
+                    sh 'sudo docker login -u sakthinatural123 -p ${dockerpwd}'
+                    sh "sudo docker run -it -d -P sakthinatural123/testing:latest" 
+                 }  
+               
             }
         }
         
@@ -27,25 +31,31 @@ pipeline {
             }
             steps {
                 withCredentials([string(credentialsId: 'docker-pwd', variable: 'dockerpwd')]) {
-                  sh "sudo docker login -u sakthinatural123 -p ${dockerpwd}"
-                }
-                sh "sudo docker push sakthinatural123/testing:latest"
+                    sh 'sudo docker login -u sakthinatural123 -p ${dockerpwd}'
+                    sh "sudo docker push sakthinatural123/testing:latest"
+                 }  
                 
-               
             }
             
         }
         
-        stage('Deploy to Kubernetes') {
-            agent {
-                label "testing"
-            }
-            steps {
-                script {
-                    kubernetesDeploy configs: 'deployment.yaml', kubeConfig: [path: ''], kubeconfigId: 'mykubeconfig', secretName: '', ssh: [sshCredentialsId: '*', sshServer: ''], textCredentials: [certificateAuthorityData: '', clientCertificateData: '', clientKeyData: '', serverUrl: 'https://']
-                }
-            }
-        }
+        
+        stage('Copy file to  k8s master') {
+          steps {
+               sshagent(['sshkey']) {
+                  sh "scp -o StrictHostKeyChecking=no deployment.yaml ubuntu@172.31.26.16:/home/ubuntu"
+              }
+          }
+      }
+
+      stage('Deploy App on k8s') {
+          steps {
+               sshagent(['sshkey']) {
+                sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.26.16 -C \"sudo kubectl create -f deployment.yaml\""
+              }
+          }
+      }
+                
         
     }
 }
