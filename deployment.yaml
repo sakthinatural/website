@@ -1,34 +1,40 @@
----
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-app
+  name: web-deployment
   labels:
-    app: web-app
-    env: dev
+    app: web
   namespace: jenkins
 spec:
-  containers:
-  - name: web-app
-    image: sakthinatural123/testing:latest
-    ports:
-    - containerPort: 80
-      protocol: TCP  
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: web-app
+        image: sakthinatural123/testing:latest
+        ports:
+        - containerPort: 80
+          protocol: TCP
 ---
 
 apiVersion: v1
 kind: Service 
 metadata:
-  name: web-web
+  name: nginx-web
   labels:
-    app: web-web
+    app: nginx-web
     env: dev
   namespace: jenkins
 spec:
   type: NodePort
   selector:
-    app: web-app
+    app: nginx-app
   ports:
   - protocol: TCP
     port: 80
