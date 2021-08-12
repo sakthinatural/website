@@ -8,7 +8,7 @@ metadata:
     app: web
   namespace: jenkins
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: web
@@ -17,9 +17,11 @@ spec:
       labels:
         app: web
     spec:
+      terminationGracePeriodSeconds: 30
       containers:
       - name: web-app
         image: sakthinatural123/testing:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           protocol: TCP
