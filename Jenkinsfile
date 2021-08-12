@@ -41,6 +41,9 @@ pipeline {
         
         
         stage('Copy file to  k8s master') {
+          agent {
+                label "testing"
+          }
           steps {
                sshagent(['sshkey']) {
                   sh "scp -o StrictHostKeyChecking=no deployment.yaml ubuntu@172.31.26.16:/home/ubuntu"
@@ -51,7 +54,7 @@ pipeline {
       stage('Deploy App on k8s') {
           steps {
                sshagent(['sshkey']) {
-                sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.26.16 -C \"sudo kubectl create -f deployment.yaml\""
+                sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.26.16 -C \"sudo kubectl apply -f deployment.yaml\""
               }
           }
       }
@@ -59,4 +62,3 @@ pipeline {
         
     }
 }
-
